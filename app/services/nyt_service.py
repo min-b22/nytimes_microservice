@@ -1,17 +1,17 @@
-import os
 from typing import List, Optional
 from fastapi import HTTPException
 from app.clients import nyt_client
 from app.models.nyt_models import TopStory, ArticleSearchResult
+from app.utils.constants import DEFAULT_CATEGORIES
 import httpx
 
 RETRY_DELAY = 12
 
 async def get_combined_top_stories():
-    categories = os.getenv("NYT_CATEGORIES", "").split(",")
+    categories = DEFAULT_CATEGORIES
     if not categories:
-        print(f"No categories defined in NYT_CATEGORIES")
-        raise RuntimeError("Missing NYT_CATEGORIES")
+        print("No categories defined in DEFAULT_CATEGORIES")
+        raise RuntimeError("Missing DEFAULT_CATEGORIES")
     results = []
 
     for category in categories:
@@ -21,7 +21,7 @@ async def get_combined_top_stories():
             status_code = e.response.status_code
             if status_code == 404:
                 print(f"Invalid category '{category}': 404 Not Found")
-                raise  # stop everything
+                raise HTTPException(status_code=400, detail=f"Invalid category '{category}'")
             else:
                 print(f"HTTP error for '{category}': {status_code}")
                 continue
@@ -42,8 +42,8 @@ async def get_combined_top_stories():
             ))
 
     if not results:
-        raise RuntimeError("No valid stories found.")
-    print(f"✅ Total results collected: {len(results)}")
+        raise HTTPException(status_code=500, detail="No valid stories found.")
+    # print(f"Total results collected: {len(results)}")
     return results
 
 
@@ -55,8 +55,10 @@ async def search_articles(
     try:
         data = await nyt_client.fetch_article_search(q, begin_date, end_date)
         docs = data.get("response", {}).get("docs", [])
-        results = []
-
+        if not docs:
+            return []
+    
+        results = []    
         for doc in docs:
             headline = doc.get("headline", {}).get("main")
             snippet = doc.get("snippet")
@@ -72,9 +74,21 @@ async def search_articles(
                 web_url=web_url,
                 pub_date=pub_date
             ))
-
+        # print(f"Total results collected: {len(results)}")
         return results
-
+    except httpx.HTTPStatusError as e:
+        print(f"HTTP error during article search: {e.response.status_code} - {e.response.text}")
+        if e.response.status_code == 429:
+            raise HTTPException(
+                status_code=503,
+                detail="Too many requests to NYT API. Please try again later."
+            )
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"NYT API error: {e.response.text}"
+        )
+    except HTTPException as e:
+        raise e
     except Exception as e:
-        print(f"Error during article search: {e}")
-        return []
+        print(f"Unexpected error during article search: {e}")
+        raise HTTPException(status_code=500, detail="Unexpected error occurred during article search.")

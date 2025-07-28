@@ -1,4 +1,3 @@
-import os
 from fastapi import FastAPI
 from app.routes import nytimes
 from dotenv import load_dotenv

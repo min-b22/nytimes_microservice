@@ -2,9 +2,9 @@
 
 This microservice provides endpoints to access and search for articles using the New York Times API.
 
-## Endpoints
-
 ---
+
+## Endpoints
 
 ### GET `/nytimes/topstories`
 
@@ -40,9 +40,9 @@ Only results with all fields and a valid URL (`https://www.nytimes.com/...`) are
 
 #### Error Responses
 
-- `400 Bad Request`: Invalid category from environment
-- `503 Service Unavailable`: Rate limit exceeded on NYT API
-- `500 Internal Server Error`: Unexpected failure
+- `400 Bad Request`: Invalid category from environment  
+- `503 Service Unavailable`: Rate limit exceeded on NYT API  
+- `500 Internal Server Error`: Unexpected failure  
 
 ---
 
@@ -81,22 +81,62 @@ Only articles with all four fields present are included.
 
 #### Error Responses
 
-- `422 Unprocessable Entity`: Invalid date format or date order
-- `503 Service Unavailable`: Rate limit exceeded on NYT API
-- `500 Internal Server Error`: Unexpected failure
+- `422 Unprocessable Entity`: Invalid date format or date order  
+- `503 Service Unavailable`: Rate limit exceeded on NYT API  
+- `500 Internal Server Error`: Unexpected failure  
 
 ---
 
 ## Environment Variables
 
-| Variable            | Description                            |
-|---------------------|----------------------------------------|
-| `NYT_API_KEY`       | Your NYT API key                       |
-| `NYT_CATEGORIES`    | Comma-separated list of sections (e.g. `arts,science,...`) |
-| `NYT_VALID_SECTIONS`| Comma-separated list of all valid NYT sections (for validation) |
+| Variable             | Description                                                                |
+|----------------------|----------------------------------------------------------------------------|
+| `NYT_API_KEY`        | Your NYT API key                                                           |
+---
+
+## How to Run
+
+### 1. Install dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+### 2. Set environment variables
+
+Create a `.env` file or set the following manually:
+
+```env
+NYT_API_KEY=your-api-key
+```
+
+### 3. Start the server
+
+```bash
+uvicorn app.main:app --reload
+```
+
+The app will be available at `http://localhost:8000/docs`.
+
+---
+
+## How to Run Tests
+
+Tests are written using `pytest`. To run all tests:
+
+```bash
+pytest
+```
+
+If you want to see logs during testing, you can run:
+
+```bash
+pytest -s
+```
 
 ---
 
 ## Notes
 
-- Rate limits: 5 requests/minute, 500/day for Top Stories API. (https://developer.nytimes.com/faq#a11)
+- Rate limits: 5 requests/minute, 500/day for NYT API.  
+  [NYT Developer FAQ](https://developer.nytimes.com/faq#a11)
